@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>自選影片自動播放測試</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%; background: #000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: white; font-family: sans-serif;
+    }
+    input, button {
+      padding: 10px; font-size: 16px; margin: 10px;
+    }
+    #ytplayer {
+      width: 100%; height: 360px; max-width: 640px;
+      margin-top: 10px;
+    }
+    #msg { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>🔁 YouTube 自動播放測試頁</h2>
+  <p>請輸入 YouTube 網址或影片 ID：</p>
+  <input type="text" id="videoInput" placeholder="例如：https://youtu.be/dQw4w9WgXcQ" />
+  <button onclick="loadVideo()">▶️ 播放影片</button>
+
+  <div id="msg">尚未載入影片</div>
+  <iframe id="ytplayer" frameborder="0"
+    allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+  <script>
+    function extractVideoID(url) {
+      try {
+        const u = new URL(url);
+        if (u.hostname === "youtu.be") return u.pathname.slice(1);
+        if (u.hostname.includes("youtube.com")) return new URLSearchParams(u.search).get("v");
+      } catch {
+        return url.trim(); // 使用者可能直接貼 ID
+      }
+    }
+
+    function loadVideo() {
+      const input = document.getElementById("videoInput").value;
+      const videoID = extractVideoID(input);
+      const iframe = document.getElementById("ytplayer");
+      document.getElementById("msg").textContent = "正在載入並模擬播放中…";
+
+      // 組合 YouTube 影片播放網址
+      const embedUrl = `https://www.youtube.com/embed/${videoID}?autoplay=1&mute=0&enablejsapi=1&playsinline=1&rel=0`;
+      iframe.src = embedUrl;
+
+      // 模擬播放與滑鼠
+      setTimeout(() => {
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+      }, 2000);
+
+      // 模擬滑鼠移動
+      function fakeMouseMove() {
+        const evt = new MouseEvent("mousemove", {
+          view: window, bubbles: true, cancelable: true
+        });
+        document.dispatchEvent(evt);
+      }
+
+      const interval = setInterval(fakeMouseMove, 5000); // 每 5 秒滑一次
+      setTimeout(() => clearInterval(interval), 120000); // 停止時間：2分鐘
+      setTimeout(() => {
+        document.getElementById("msg").textContent = "觀看結束（已模擬2分鐘）";
+      }, 120000);
+    }
+  </script>
+</body>
+</html>
